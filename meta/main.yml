@@ -1,8 +1,9 @@
 dependencies:
   - lmickh.docker
 galaxy_info:
-  author: larslevie
+  role_name: filebeat
   description: Install and run Elastic Filebeat in Docker Container
+  author: larslevie
   license: MIT
   min_ansible_version: 2.2
   platforms:
