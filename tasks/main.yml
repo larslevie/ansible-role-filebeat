@@ -1,0 +1,91 @@
+- name: Create filebeat config directory
+  become: true
+  file:
+    path: "{{ filebeat_path }}/config"
+    state: directory
+    mode: 0775
+    owner: 1000
+    group: 1000
+
+- name: Create filebeat data directory
+  become: true
+  file:
+    path: "{{ filebeat_path }}/data"
+    state: directory
+    mode: 0775
+    owner: root
+    group: root
+
+- name: Create filebeat logs directory
+  become: true
+  file:
+    path: "{{ filebeat_path }}/logs"
+    state: directory
+    mode: 0775
+    owner: root
+    group: root
+
+- name: Create filebeat inputs directory
+  become: true
+  file:
+    path: "{{ filebeat_path }}/inputs.d"
+    state: directory
+    mode: 0775
+    owner: root
+    group: root
+
+- name: Create filebeat config file
+  become: true
+  template:
+    dest: "{{ filebeat_path }}/filebeat.yml"
+    src: "templates/filebeat.yml.j2"
+    mode: 0644
+    owner: root
+    group: root
+  register: filebeat_service_config
+
+- name: Create Filebeat container
+  become: true
+  docker_container:
+    name: "{{ filebeat_service }}"
+    detach: true
+    image: "{{ filebeat_image }}"
+    network_mode: host
+    state: present
+    user: root
+    volumes:
+      - "{{ filebeat_path }}/filebeat.yml:/usr/share/filebeat/filebeat.yml:Z"
+      - "{{ filebeat_path }}/data:/usr/share/filebeat/data:Z"
+      - "{{ filebeat_path }}/logs:/usr/share/filebeat/logs:Z"
+      - "{{ filebeat_path }}/inputs.d:/usr/share/filebeat/inputs.d:ro"
+      - "/var/lib/docker/containers:/var/lib/docker/containers:ro"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+  register: filebeat_service_config
+
+- name: Create Filebeat service file
+  become: true
+  template:
+    dest: "/etc/systemd/system/{{ filebeat_service }}.service"
+    src: "templates/filebeat.service.j2"
+    mode: 0664
+  register: filebeat_service_config
+  when: ansible_service_mgr == 'systemd'
+
+- name: Restart Filebeat service when changed
+  become: true
+  systemd:
+    name: "{{ filebeat_service }}.service"
+    daemon_reload: yes
+    state: restarted
+  when:
+    - filebeat_service_config.changed
+    - filebeat_enabled
+
+- name: Enable Filebeat service
+  become: true
+  service:
+    name: "{{ filebeat_service }}"
+    state: started
+    enabled: yes
+  when:
+    - filebeat_enabled

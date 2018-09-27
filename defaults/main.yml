@@ -1,0 +1,4 @@
+filebeat_enabled: true
+filebeat_image: docker.elastic.co/beats/filebeat-oss:6.4.0
+filebeat_path: "/opt/filebeat"
+filebeat_service: filebeat

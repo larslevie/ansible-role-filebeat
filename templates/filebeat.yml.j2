@@ -1,0 +1,13 @@
+# This file is managed by Ansible. Do not edit it manually.
+
+name: {{ inventory_hostname }}
+
+filebeat.config:
+  inputs:
+    path: ${path.config}/inputs.d/*.yml
+    reload.enabled: false
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+{{ filebeat_config | to_nice_yaml }}
